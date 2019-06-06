@@ -26,7 +26,7 @@ WatsonFunction is a simple function-as-a-service (FaaS) platform for hosting and
 
 Function applications must include ```WatsonFunction.FunctionBase``` and implement a method with the signature ```public override Response Start(Request req)```.  An example application can be found in the ```SampleApp``` project, and a simplified version is shown below.
 
-Install the NuGet package ```WatsonFunction.FunctionBase``` to creation functions.
+Install the NuGet package ```WatsonFunction.FunctionBase``` to creation functions (https://www.nuget.org/packages/WatsonFunction.Base/).
 
 ```
 using System;
