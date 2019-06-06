@@ -114,6 +114,46 @@ Worker nodes listen on the invocation channel, deserialize messages to the ```Re
 
 As of this release, only .NET Core functions are supported.
 
+## Administrative APIs
+
+As of v1.0.0, only one administrative API is available: ```GET /_directory```, which returns a JSON object containing all of the applications (and functions) hosted on the platform.
+
+```
+GET /_directory
+(no request body)
+Response:
+200/OK
+[
+  {
+    "Name": "default",
+    "UserGUID": "default",
+    "Functions": [
+      {
+        "FunctionName": "default",
+        "UserGUID": "default",
+        "Runtime": 0,
+        "BaseDirectory": "C:/WatsonFunction/DLLs/",
+        "EntryFile": "SampleApp.dll",
+        "Triggers": [
+          {
+            "Methods": [
+              "GET",
+              "PUT",
+              "POST",
+              "DELETE"
+            ],
+            "Required": {
+              "RequestBody": false,
+              "RequireSsl": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
 ## Roadmap
 
 The following items are planned for future releases:
