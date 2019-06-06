@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>WatsonFunction.ApiGateway</RootNamespace>
+    <AssemblyName>WatsonFunction.ApiGateway</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BigQ.Client" Version="2.1.6" />
+    <PackageReference Include="Watson" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <ProjectReference Include="..\FunctionBase\FunctionBase.csproj" />
+    <ProjectReference Include="..\FunctionCore\FunctionCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="API\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>WatsonFunction.MessageBus</RootNamespace>
+    <AssemblyName>WatsonFunction.MessageBus</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BigQ.Server" Version="2.1.7" />
+    <PackageReference Include="SqliteHelper" Version="1.0.11" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <ProjectReference Include="..\FunctionCore\FunctionCore.csproj" />
+  </ItemGroup>
+
+</Project>
