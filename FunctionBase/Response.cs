@@ -5,13 +5,31 @@ using System.Text;
 
 namespace WatsonFunction.FunctionBase
 {
+    /// <summary>
+    /// Response from a function that was invoked.
+    /// </summary>
     public class Response
     {
         #region Public-Members
 
+        /// <summary>
+        /// Time when the function was invoked.
+        /// </summary>
         public DateTime StartTime;
+
+        /// <summary>
+        /// Time when the function finished execution.
+        /// </summary>
         public DateTime EndTime; 
+
+        /// <summary>
+        /// Execution time in milliseconds.
+        /// </summary>
         public double RuntimeMs; 
+
+        /// <summary>
+        /// HTTP status to return to the requestor.
+        /// </summary>
         public int HttpStatus
         {
             get
@@ -25,9 +43,19 @@ namespace WatsonFunction.FunctionBase
             }
         }
 
+        /// <summary>
+        /// Content type of the response data.
+        /// </summary>
         public string ContentType;
+
+        /// <summary>
+        /// Response headers.
+        /// </summary>
         public Dictionary<string, string> Headers; 
 
+        /// <summary>
+        /// Content length of the response data.
+        /// </summary>
         public long ContentLength
         {
             get
@@ -41,6 +69,9 @@ namespace WatsonFunction.FunctionBase
             }
         }
 
+        /// <summary>
+        /// Response data.
+        /// </summary>
         public byte[] Data
         {
             get
@@ -66,6 +97,9 @@ namespace WatsonFunction.FunctionBase
 
         #region Constructors-and-Factories
 
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
         public Response()
         {
 

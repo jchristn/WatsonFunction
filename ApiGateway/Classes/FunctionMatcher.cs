@@ -150,8 +150,7 @@ namespace WatsonFunction.ApiGateway.Classes
 
                 fcnRequest.Http = new Request.HttpParameters();
                 fcnRequest.Http.ContentLength = req.ContentLength;
-                fcnRequest.Http.Data = req.Data;
-                fcnRequest.Http.DataStream = req.DataStream;
+                fcnRequest.Http.Data = req.Data; 
                 fcnRequest.Http.FullUrl = req.FullUrl;
                 fcnRequest.Http.Headers = req.Headers;
                 fcnRequest.Http.Method = req.Method.ToString().ToLower();
@@ -160,8 +159,7 @@ namespace WatsonFunction.ApiGateway.Classes
                 fcnRequest.Http.RawUrlWithoutQuery = req.RawUrlWithoutQuery;
                 fcnRequest.Http.SourceIp = req.SourceIp;
                 fcnRequest.Http.SourcePort = req.SourcePort;
-                fcnRequest.Http.Ssl = req.FullUrl.StartsWith("https://");
-                fcnRequest.Http.UseStream = false;
+                fcnRequest.Http.Ssl = req.FullUrl.StartsWith("https://"); 
 
                 return curr;
             }

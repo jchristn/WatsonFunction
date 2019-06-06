@@ -4,6 +4,19 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>WatsonFunction.FunctionCore</RootNamespace>
     <AssemblyName>WatsonFunction.FunctionCore</AssemblyName>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Joel Christner</Authors>
+    <Company>Joel Christner</Company>
+    <Product>WatsonFunction Core Library</Product>
+    <Description>Core library for WatsonFunction FaaS platform.</Description>
+    <Copyright>(c)2019 Joel Christner</Copyright>
+    <PackageLicenseUrl>https://github.com/jchristn/WatsonFunction/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/jchristn/WatsonFunction</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/jchristn/WatsonFunction/master/assets/function.ico</PackageIconUrl>
+    <RepositoryUrl>https://github.com/jchristn/WatsonFunction</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>faas function as a service platform app apps functions</PackageTags>
+    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
