@@ -34,16 +34,16 @@ using WatsonFunction.FunctionBase;
 
 namespace SampleApp
 {
-    public class App : Application
-    { 
-        public override Response Start(Request req)
-        {
-            Response resp = new Response();
-            resp.Data = Encoding.UTF8.GetBytes("Hello!  " + req.Http.Method.ToUpper() + " " + req.Http.RawUrlWithoutQuery);
-            resp.HttpStatus = 200;
-            return resp;
-        }
+  public class App : Application
+  { 
+    public override Response Start(Request req)
+    {
+      Response resp = new Response();
+      resp.Data = Encoding.UTF8.GetBytes("Hello!  " + req.Http.Method.ToUpper() + " " + req.Http.RawUrlWithoutQuery);
+      resp.HttpStatus = 200;
+      return resp;
     }
+  }
 }
 ```
 
@@ -57,50 +57,46 @@ An example ```system.json``` file for the API gateway is shown below, defining o
 
 ```
 {
-	"Webserver": {
-		"Hostname": "*",
-		"TcpPort": 9000,
-		"Ssl": false,
-		"Debug": false
-	},
-	"MessageQueue": {
-		"TcpPort": 10000,
-		"Debug": false,
-		"Channels": {
-			"MainChannel": "main",
-			"HealthChannel": "health",
-			"InvocationChannel": "invocation"
-		
-	},
-	"Applications": [
-		{ 
-			"Name": "default",
-			"UserGUID": "default",
-			"Functions": [
-				{ 
-					"FunctionName": "default",
-					"UserGUID": "default",
-					"Runtime": "NetCore22",
-					"BaseDirectory": "C:/WatsonFunction/DLLs/",
-					"EntryFile": "SampleApp.dll",
-					"EntryPoint": "SampleApp::App::Start",
-					"Triggers": [
-						{
-							"Methods": [
-								"GET", "PUT", "POST", "DELETE"
-							],
-							"Required": {
-								"QuerystringEntries": null,
-								"Headers": null,
-								"RequestBody": false,
-								"RequireSsl": false
-							}
-						}
-					]
-				}
-			]
-		}
-	]
+  "Webserver": {
+    "Hostname": "*",
+    "TcpPort": 9000,
+    "Ssl": false,
+    "Debug": false
+  },
+  "MessageQueue": {
+    "TcpPort": 10000,
+    "Debug": false,
+    "Channels": {
+      "MainChannel": "main",
+      "HealthChannel": "health",
+      "InvocationChannel": "invocation"	
+    },
+    "Applications": [
+      { 
+        "Name": "My Default Application",
+        "UserGUID": "default",
+        "Functions": [
+          { 
+            "FunctionName": "default",
+            "UserGUID": "default",
+            "Runtime": "NetCore22",
+            "BaseDirectory": "C:/WatsonFunction/DLLs/",
+            "EntryFile": "SampleApp.dll",
+            "Triggers": [
+              {
+                "Methods": [ "GET", "PUT", "POST", "DELETE" ],
+                "Required": {
+                  "QuerystringEntries": null,
+                  "Headers": null,
+                  "RequestBody": false,
+                  "RequireSsl": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
 ```
 
