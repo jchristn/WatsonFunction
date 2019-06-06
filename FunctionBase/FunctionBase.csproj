@@ -14,6 +14,7 @@
     <PackageTags>faas function as a service platform app apps functions</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/WatsonFunction/master/assets/function.ico</PackageIconUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
 </Project>
