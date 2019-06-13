@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using WatsonFunction.FunctionBase;
-
+using SyslogLogging;
 using WatsonWebserver;
+
+using WatsonFunction.FunctionBase;
 
 namespace WatsonFunction.ApiGateway.Classes
 {
@@ -17,6 +18,7 @@ namespace WatsonFunction.ApiGateway.Classes
 
         #region Private-Members
 
+        private LoggingModule _Logging;
         private readonly object _FunctionLock = new object();
         private List<FunctionApplication> _Apps;
         private List<Definition> _Definitions;
@@ -25,10 +27,12 @@ namespace WatsonFunction.ApiGateway.Classes
 
         #region Constructors-and-Factories
 
-        public FunctionMatcher(List<FunctionApplication> apps)
+        public FunctionMatcher(LoggingModule logging, List<FunctionApplication> apps)
         {
+            if (logging == null) throw new ArgumentNullException(nameof(logging));
             if (apps == null) throw new ArgumentNullException(nameof(apps));
 
+            _Logging = logging;
             _Apps = apps;
             _Definitions = new List<Definition>();
 
@@ -63,7 +67,7 @@ namespace WatsonFunction.ApiGateway.Classes
             if (String.IsNullOrEmpty(functionName)) throw new ArgumentNullException(nameof(functionName));
             if (_Apps == null || _Apps.Count < 1)
             {
-                Console.WriteLine("No defined functions");
+                _Logging.Log(LoggingModule.Severity.Warn, "Worker Match no defined functions");
                 return null;
             }
 
@@ -86,7 +90,7 @@ namespace WatsonFunction.ApiGateway.Classes
 
             if (candidates == null || candidates.Count < 1)
             {
-                Console.WriteLine("No functions matching user GUID " + userGuid + " name " + functionName);
+                _Logging.Log(LoggingModule.Severity.Warn, "Worker Match no functions matching user GUID " + userGuid + " name " + functionName);
                 return null;
             }
 
@@ -134,8 +138,9 @@ namespace WatsonFunction.ApiGateway.Classes
 
                 if (matched == null || matched.Count < 1)
                 {
-                    Console.WriteLine("No triggers match");
+                    _Logging.Log(LoggingModule.Severity.Warn, "Worker Match no triggers match");
                     error = ErrorCode.NoMatch;
+                    return null;
                 }
 
                 trigger = matched[0];

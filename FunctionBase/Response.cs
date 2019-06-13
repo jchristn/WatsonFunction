@@ -102,7 +102,7 @@ namespace WatsonFunction.FunctionBase
         /// </summary>
         public Response()
         {
-
+            _HttpStatus = 200;
         }
 
         #endregion

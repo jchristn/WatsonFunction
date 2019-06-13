@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageBus", "MessageBus\Me
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiGateway", "ApiGateway\ApiGateway.csproj", "{5C7B0B95-B910-4E44-995D-24B004ED058F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleApp", "SampleApp\SampleApp.csproj", "{CEC696F1-D4CD-4959-AC10-C088774A5771}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleApp1", "SampleApp1\SampleApp1.csproj", "{CEC696F1-D4CD-4959-AC10-C088774A5771}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionBase", "FunctionBase\FunctionBase.csproj", "{1620D8EC-27B0-4C3C-9697-682282D2EC10}"
 EndProject

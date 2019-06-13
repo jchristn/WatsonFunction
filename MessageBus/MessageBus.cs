@@ -9,12 +9,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using WatsonFunction;
+using SyslogLogging;
 using Newtonsoft.Json;
 
 using BigQ.Core;
 using BigQ.Server;
 
+using WatsonFunction;
 using WatsonFunction.MessageBus.Classes;
 
 namespace WatsonFunction.MessageBus
@@ -22,6 +23,7 @@ namespace WatsonFunction.MessageBus
     class Program
     {
         static Settings _Settings;
+        static LoggingModule _Logging;
         static ServerConfiguration _BigQConfig = null;
         static List<Channel> _BigQChannels = new List<Channel>();
         static Server _BigQServer = null;
@@ -33,10 +35,12 @@ namespace WatsonFunction.MessageBus
 
         static void Main(string[] args)
         {
-            Console.WriteLine("WatsonFunction MessageBus starting");
+            Console.WriteLine(Logo());
+            Console.WriteLine("WatsonFunction MessageBus " + Version() + " starting");
             Console.WriteLine("Press ENTER to exit");
 
             InitializeSettings();
+            InitializeLogging();
             InitializeBigQ();
 
             string userInput = null;
@@ -92,8 +96,23 @@ namespace WatsonFunction.MessageBus
             }
         }
 
+        static void InitializeLogging()
+        {
+            _Logging = new LoggingModule(
+                _Settings.Logging.SyslogServerIp,
+                _Settings.Logging.SyslogServerPort,
+                _Settings.Logging.ConsoleLogging,
+                _Settings.Logging.MinimumSeverity,
+                false,
+                false,
+                true,
+                true,
+                false,
+                false);
+        }
+
         #region Console
-         
+
         static void Menu()
         {
             Console.WriteLine("--- Available Commands ---");
@@ -187,6 +206,32 @@ namespace WatsonFunction.MessageBus
 
         #endregion
 
+        #region Misc-Methods
+
+        static string Version()
+        {
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string version = fvi.FileVersion;
+            return version;
+        }
+
+        static string Logo()
+        {
+            // http://patorjk.com/software/taag/#p=display&f=Slant&t=watson
+
+            string ret =
+              @"                   __                   " + Environment.NewLine +
+              @"   _      ______ _/ /__________  ____   " + Environment.NewLine +
+              @"  | | /| / / __ `/ __/ ___/ __ \/ __ \  " + Environment.NewLine +
+              @"  | |/ |/ / /_/ / /_(__  ) /_/ / / / /  " + Environment.NewLine +
+              @"  |__/|__/\__,_/\__/____/\____/_/ /_/   ";
+
+            return ret;
+        }
+
+        #endregion
+
         #region BigQ-Methods
 
         static void InitializeBigQ()
@@ -230,31 +275,31 @@ namespace WatsonFunction.MessageBus
 
         static bool ClientConnected(ServerClient client)
         {
-            Console.WriteLine("Client " + client.ClientGUID + " [" + client.IpPort + "] connected");
+            _Logging.Log(LoggingModule.Severity.Debug, "MessageBus ClientConnected client " + client.ClientGUID + " [" + client.IpPort + "] connected");
             return true;
         }
 
         static bool ClientDisconnected(ServerClient client)
         {
-            Console.WriteLine("Client " + client.ClientGUID + " [" + client.IpPort + "] disconnected");
+            _Logging.Log(LoggingModule.Severity.Debug, "MessageBus ClientDisconnected client " + client.ClientGUID + " [" + client.IpPort + "] disconnected");
             return true;
         }
 
         static bool ClientLogin(ServerClient client)
         {
-            Console.WriteLine("Client " + client.ClientGUID + " [" + client.IpPort + "] logged in");
+            _Logging.Log(LoggingModule.Severity.Debug, "MessageBus ClientLogin client " + client.ClientGUID + " [" + client.IpPort + "] logged in");
             return true;
         }
 
         static bool MessageReceived(Message msg)
         {
-            // Console.WriteLine("Message received:" + Environment.NewLine + msg.ToString());
+            // _Logging.Log(LoggingModule.Severity.Debug, "MessageBus MessageReceived message received:" + Environment.NewLine + msg.ToString());
             return true;
         }
 
         static bool ServerStopped()
         {
-            Console.WriteLine("Server stopped");
+            _Logging.Log(LoggingModule.Severity.Alert, "MessageBus ServerStopped server stopped");
             return true;
         }
 

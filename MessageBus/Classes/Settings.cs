@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Text;
 
+using SyslogLogging;
+
 namespace WatsonFunction.MessageBus.Classes
 {
     public class Settings
     {
         #region Public-Members
 
-        public MessageQueueSettings MessageQueue = new MessageQueueSettings();  
+        public MessageQueueSettings MessageQueue = new MessageQueueSettings();
+        public LoggingSettings Logging = new LoggingSettings();
 
         #endregion
 
@@ -56,6 +59,19 @@ namespace WatsonFunction.MessageBus.Classes
             }
 
             public MessageQueueSettings()
+            {
+
+            }
+        }
+
+        public class LoggingSettings
+        {
+            public string SyslogServerIp = "127.0.0.1";
+            public int SyslogServerPort = 514;
+            public LoggingModule.Severity MinimumSeverity = LoggingModule.Severity.Info;
+            public bool ConsoleLogging = true;
+
+            public LoggingSettings()
             {
 
             }

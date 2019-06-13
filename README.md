@@ -1,3 +1,5 @@
+![alt tag](https://github.com/jchristn/watsonfunction/blob/master/assets/watson.ico)
+
 # WatsonFunction
 
 ```

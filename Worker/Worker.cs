@@ -9,13 +9,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using WatsonFunction;
-using WatsonFunction.FunctionBase;
-using Newtonsoft.Json; 
+using Newtonsoft.Json;
+using SyslogLogging;
 
 using BigQ.Client;
 using BigQ.Core;
 
+using WatsonFunction;
+using WatsonFunction.FunctionBase;
 using WatsonFunction.Worker.Classes;
 
 namespace WatsonFunction.Worker
@@ -23,6 +24,7 @@ namespace WatsonFunction.Worker
     class Program
     {
         static Settings _Settings;
+        static LoggingModule _Logging;
         static ClientConfiguration _BigQConfig;
         static Client _BigQClient;
 
@@ -33,12 +35,14 @@ namespace WatsonFunction.Worker
 
         static void Main(string[] args)
         {
-            Console.WriteLine("WatsonFunction Worker starting"); 
+            Console.WriteLine(Logo());
+            Console.WriteLine("WatsonFunction Worker " + Version() + " starting");
+            Console.WriteLine("Press ENTER to exit");
 
             InitializeSettings();
+            InitializeLogging();
             InitializeBigQ();
-            Task.Run(() => MaintainConnection(), _Token);
-            // JoinChannels();
+            Task.Run(() => MaintainConnection(), _Token); 
 
             string userInput = null;
             while (_RunForever)
@@ -77,6 +81,21 @@ namespace WatsonFunction.Worker
             }
         }
 
+        static void InitializeLogging()
+        {
+            _Logging = new LoggingModule(
+                _Settings.Logging.SyslogServerIp,
+                _Settings.Logging.SyslogServerPort,
+                _Settings.Logging.ConsoleLogging,
+                _Settings.Logging.MinimumSeverity,
+                false,
+                false,
+                true,
+                true,
+                false,
+                false);
+        }
+
         #region Console
 
         static void Menu()
@@ -86,6 +105,32 @@ namespace WatsonFunction.Worker
             Console.WriteLine("  cls              Clear the screen");
             Console.WriteLine("  q                Exit the application");
             Console.WriteLine("");
+        }
+
+        #endregion
+
+        #region Misc-Methods
+
+        static string Version()
+        {
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string version = fvi.FileVersion;
+            return version;
+        }
+
+        static string Logo()
+        {
+            // http://patorjk.com/software/taag/#p=display&f=Slant&t=watson
+
+            string ret =
+              @"                   __                   " + Environment.NewLine +
+              @"   _      ______ _/ /__________  ____   " + Environment.NewLine +
+              @"  | | /| / / __ `/ __/ ___/ __ \/ __ \  " + Environment.NewLine +
+              @"  | |/ |/ / /_/ / /_(__  ) /_/ / / / /  " + Environment.NewLine +
+              @"  |__/|__/\__,_/\__/____/\____/_/ /_/   ";
+
+            return ret;
         }
 
         #endregion
@@ -132,21 +177,21 @@ namespace WatsonFunction.Worker
                 {
                     if (!_BigQClient.Connected)
                     {
-                        Console.WriteLine("Disconnected from message bus, attempting to reconnect");
+                        _Logging.Log(LoggingModule.Severity.Warn, "Worker MaintainConnection disconnected from message bus, attempting to reconnect");
                         InitializeBigQ();
                     }
 
                     if (!_BigQClient.LoggedIn)
                     {
-                        Console.WriteLine("Attempting login to message bus");
+                        _Logging.Log(LoggingModule.Severity.Debug, "Worker MaintainConnection attempting login to message bus");
                         Message loginResp = null;
                         if (!_BigQClient.Login(out loginResp))
                         {
-                            Console.WriteLine("Unable to login to message bus");
+                            _Logging.Log(LoggingModule.Severity.Warn, "Worker MaintainConnection unable to login to message bus");
                         }
                         else
                         {
-                            Console.WriteLine("Logged into message bus, joining channels");
+                            _Logging.Log(LoggingModule.Severity.Debug, "Worker MaintainConnection logged into message bus, joining channels");
                             Thread.Sleep(1000);
                             JoinChannels();
                         }
@@ -154,8 +199,8 @@ namespace WatsonFunction.Worker
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Exception while attempting to reconnect:");
-                    Console.WriteLine(Common.SerializeJson(e));
+                    _Logging.Log(LoggingModule.Severity.Alert, "Worker MaintainConnection exception while attempting to reconnect:");
+                    _Logging.LogException("Worker", "MaintainConnection", e);
                 }
             }
         }
@@ -166,96 +211,96 @@ namespace WatsonFunction.Worker
             {
                 Message msg = null;
                 if (_BigQClient.JoinChannel(_Settings.MessageQueue.Channels.MainChannel, out msg))
-                    Console.WriteLine("Joined channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
-                else Console.WriteLine("Failed to join channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "Worker JoinChannels joined channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "Worker JoinChannels failed to join channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
 
                 if (_BigQClient.JoinChannel(_Settings.MessageQueue.Channels.HealthChannel, out msg))
-                    Console.WriteLine("Joined channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
-                else Console.WriteLine("Failed to join channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "Worker JoinChannels joined channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "Worker JoinChannels failed to join channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
 
                 if (_BigQClient.SubscribeChannel(_Settings.MessageQueue.Channels.InvocationChannel, out msg))
-                    Console.WriteLine("Subscribed to channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
-                else Console.WriteLine("Failed to subscribe to channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "Worker JoinChannels subscribed to channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "Worker JoinChannels failed to subscribe to channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception while attempting to join channels:");
-                Console.WriteLine(Common.SerializeJson(e));
+                _Logging.Log(LoggingModule.Severity.Alert, "Worker JoinChannels exception while attempting to join channels:");
+                _Logging.LogException("Worker", "JoinChannels", e);
             }
         }
 
         static bool ChannelCreated(string channelGuid)
         {
-            Console.WriteLine("Channel created: " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ChannelCreated " + channelGuid);
             return true;
         }
 
         static bool ChannelDestroyed(string channelGuid)
         {
-            Console.WriteLine("Channel destroyed: " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ChannelDestroyed " + channelGuid);
             return true;
         }
 
         static bool ClientJoinedChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " joined channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ClientJoinedChannel client " + clientGuid + " joined channel " + channelGuid);
             return true;
         }
 
         static bool ClientJoinedServer(string clientGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " joined the server");
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ClientJoinedServer client " + clientGuid + " joined the server");
             return true;
         }
 
         static bool ClientLeftChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " left channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ClientLeftChannel client " + clientGuid + " left channel " + channelGuid);
             return true;
         }
 
         static bool ClientLeftServer(string clientGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " left the server");
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ClientLeftServer client " + clientGuid + " left the server");
             return true;
         }
 
         static bool ServerConnected()
         {
-            Console.WriteLine("Message queue server connected");
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ServerConnected message queue server connected");
             return true;
         }
 
         static bool ServerDisconnected()
         {
-            Console.WriteLine("Message queue server disconnected");
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker ServerDisconnected message queue server disconnected");
             return true;
         }
 
         static bool SubscriberJoinedChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " subscribed to channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker SubscriberJoinedChannel client " + clientGuid + " subscribed to channel " + channelGuid);
             return true;
         }
 
         static bool SubscriberLeftChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " unsubscribed from channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "Worker SubscriberLeftChannel client " + clientGuid + " unsubscribed from channel " + channelGuid);
             return true;
         }
 
         static byte[] SyncMessageReceived(Message msg)
         {
-            Console.WriteLine("Sync message received: " + Environment.NewLine + msg.ToString());
+            // _Logging.Log(LoggingModule.Severity.Debug, "Worker SyncMessageReceived sync message received: " + Environment.NewLine + msg.ToString());
             Request req = Common.DeserializeJson<Request>(msg.Data); 
-            Invoker inv = new Invoker(req); 
+            Invoker inv = new Invoker(_Logging, req); 
             Response resp = inv.Invoke(); 
             return Encoding.UTF8.GetBytes(Common.SerializeJson(resp));
         }
 
         static bool AsyncMessageReceived(Message msg)
         {
-            Console.WriteLine("Message received: " + Environment.NewLine + msg.ToString());
+            // _Logging.Log(LoggingModule.Severity.Debug, "Worker AsyncMessageReceived message received: " + Environment.NewLine + msg.ToString());
             return true;
         }
 

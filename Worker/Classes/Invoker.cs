@@ -5,6 +5,8 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
+using SyslogLogging;
+
 using WatsonFunction;
 using WatsonFunction.FunctionCore;
 using WatsonFunction.FunctionBase;
@@ -15,15 +17,15 @@ namespace WatsonFunction.Worker.Classes
     {
         #region Public-Members
 
-        public bool ConsoleDebug
+        public bool Debug
         {
             get
             {
-                return _ConsoleDebug;
+                return _Debug;
             }
             set
             {
-                _ConsoleDebug = value;
+                _Debug = value;
             }
         }
 
@@ -31,17 +33,20 @@ namespace WatsonFunction.Worker.Classes
 
         #region Private-Members
 
-        private Request _Request = null;
-        private bool _ConsoleDebug = false;
+        private bool _Debug = false;
+        private LoggingModule _Logging;
+        private Request _Request = null; 
 
         #endregion
 
         #region Constructors-and-Factories
 
-        public Invoker(Request req)
+        public Invoker(LoggingModule logging, Request req)
         {
+            if (logging == null) throw new ArgumentNullException(nameof(logging));
             if (req == null) throw new ArgumentNullException(nameof(req));
 
+            _Logging = logging;
             _Request = req;
 
             if (!_Request.BaseDirectory.EndsWith("/")) _Request.BaseDirectory += "/";
@@ -66,15 +71,19 @@ namespace WatsonFunction.Worker.Classes
                     resp.EndTime = DateTime.Now;
                     resp.RuntimeMs = Common.TotalMsFrom(resp.StartTime);
 
-                    Console.WriteLine(_Request.UserGUID + "/" + _Request.FunctionName + " [" + resp.RuntimeMs + "ms]");
-
-                    if (_ConsoleDebug)
-                    {
-                        Console.WriteLine("Response:"); 
-                        Console.WriteLine("- Content Length : " + resp.ContentLength);
-                        Console.WriteLine("- Data           : " + Encoding.UTF8.GetString(resp.Data));
-                    }
+                    _Logging.Log(LoggingModule.Severity.Debug, "Worker Invoker " + _Request.UserGUID + "/" + _Request.FunctionName + " [" + resp.RuntimeMs + "ms]");
                      
+                    if (_Debug)
+                    {
+                        _Logging.Log(LoggingModule.Severity.Debug, "Worker Invoker response:");
+                        _Logging.Log(LoggingModule.Severity.Debug, "- Content Length : " + resp.ContentLength);
+
+                        if (resp.Data != null && resp.Data.Length > 0)
+                            _Logging.Log(LoggingModule.Severity.Debug, "- Data           : " + Encoding.UTF8.GetString(resp.Data));
+                        else
+                            _Logging.Log(LoggingModule.Severity.Debug, "- Data           : [null]");
+                    }
+
                     return resp;
                 }
 
@@ -82,7 +91,8 @@ namespace WatsonFunction.Worker.Classes
             }
             catch (Exception e)
             {
-                Console.WriteLine("Invocation exception: " + Common.SerializeJson(e));
+                _Logging.Log(LoggingModule.Severity.Alert, "Worker Invoker exception while invoking:");
+                _Logging.LogException("Worker", "Invoker", e);
                 return null;
             }
         }

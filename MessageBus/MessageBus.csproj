@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="BigQ.Server" Version="2.1.7" />
     <PackageReference Include="SqliteHelper" Version="1.0.11" />
+    <PackageReference Include="SyslogLogging" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup> 

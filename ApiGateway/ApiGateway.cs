@@ -9,13 +9,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using WatsonFunction;
 using Newtonsoft.Json;
+using SyslogLogging;
 using WatsonWebserver;
 
 using BigQ.Client;
 using BigQ.Core;
 
+using WatsonFunction;
 using WatsonFunction.ApiGateway.Classes;
 using WatsonFunction.FunctionBase;
 
@@ -24,6 +25,7 @@ namespace WatsonFunction.ApiGateway
     class Program
     {
         static Settings _Settings;
+        static LoggingModule _Logging;
         static Server _Webserver;
         static ClientConfiguration _BigQConfig;
         static Client _BigQClient;
@@ -36,17 +38,19 @@ namespace WatsonFunction.ApiGateway
 
         static void Main(string[] args)
         {
-            Console.WriteLine("WatsonFunction ApiGateway starting");
+            Console.WriteLine(Logo());
+            Console.WriteLine("WatsonFunction ApiGateway " + Version() + " starting");
             Console.WriteLine("Press ENTER to exit");
 
             InitializeSettings();
+            InitializeLogging();
             InitializeBigQ();
             Task.Run(() => MaintainConnection(), _Token);
             // JoinChannels();
 
             InitializeWebserver();
 
-            _Matcher = new FunctionMatcher(_Settings.Applications);
+            _Matcher = new FunctionMatcher(_Logging, _Settings.Applications);
 
             string userInput = null;
             while (_RunForever)
@@ -83,6 +87,21 @@ namespace WatsonFunction.ApiGateway
             {
                 _Settings = Common.DeserializeJson<Settings>(File.ReadAllBytes("System.json"));
             }
+        }
+
+        static void InitializeLogging()
+        {
+            _Logging = new LoggingModule(
+                _Settings.Logging.SyslogServerIp,
+                _Settings.Logging.SyslogServerPort,
+                _Settings.Logging.ConsoleLogging,
+                _Settings.Logging.MinimumSeverity,
+                false,
+                false,
+                true,
+                true,
+                false,
+                false);
         }
 
         #region Console
@@ -140,21 +159,21 @@ namespace WatsonFunction.ApiGateway
                 {
                     if (!_BigQClient.Connected)
                     {
-                        Console.WriteLine("Disconnected from message bus, attempting to reconnect");
+                        _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway MaintainConnection disconnected from message bus, attempting to reconnect");
                         InitializeBigQ();
                     }
 
                     if (!_BigQClient.LoggedIn)
                     {
-                        Console.WriteLine("Attempting login to message bus");
+                        _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway MaintainConnection attempting login to message bus");
                         Message loginResp = null;
                         if (!_BigQClient.Login(out loginResp))
                         {
-                            Console.WriteLine("Unable to login to message bus");
+                            _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway MaintainConnection unable to login to message bus");
                         }
                         else
                         {
-                            Console.WriteLine("Logged into message bus, joining channels");
+                            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway MaintainConnection logged into message bus, joining channels");
                             Thread.Sleep(1000);
                             JoinChannels();
                         }
@@ -162,8 +181,8 @@ namespace WatsonFunction.ApiGateway
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Exception while attempting to reconnect:");
-                    Console.WriteLine(Common.SerializeJson(e));
+                    _Logging.Log(LoggingModule.Severity.Alert, "ApiGateway MaintainConnection exception while attempting to reconnect:");
+                    _Logging.LogException("ApiGateway", "MaintainConnection", e);
                 }
             }
         }
@@ -174,93 +193,93 @@ namespace WatsonFunction.ApiGateway
             {
                 Message msg = null;
                 if (_BigQClient.JoinChannel(_Settings.MessageQueue.Channels.MainChannel, out msg))
-                    Console.WriteLine("Joined channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
-                else Console.WriteLine("Failed to join channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway JoinChannels joined channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway JoinChannels failed to join channel '" + _Settings.MessageQueue.Channels.MainChannel + "'");
 
                 if (_BigQClient.JoinChannel(_Settings.MessageQueue.Channels.HealthChannel, out msg))
-                    Console.WriteLine("Joined channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
-                else Console.WriteLine("Failed to join channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway JoinChannels joined channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway JoinChannels failed to join channel '" + _Settings.MessageQueue.Channels.HealthChannel + "'");
 
                 if (_BigQClient.JoinChannel(_Settings.MessageQueue.Channels.InvocationChannel, out msg))
-                    Console.WriteLine("Joined channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
-                else Console.WriteLine("Failed to join channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
+                    _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway JoinChannels joined channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
+                else _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway JoinChannels failed to join channel '" + _Settings.MessageQueue.Channels.InvocationChannel + "'");
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception while attempting to join channels:");
-                Console.WriteLine(Common.SerializeJson(e));
+                _Logging.Log(LoggingModule.Severity.Alert, "ApiGateway JoinChannels exception while attempting to join channels:");
+                _Logging.LogException("ApiGateway", "JoinChannels", e);
             }
         }
 
         static bool AsyncMessageReceived(Message msg)
         {
-            Console.WriteLine("Message received: " + Environment.NewLine + msg.ToString());
+            // _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway MaintainConnection message received: " + Environment.NewLine + msg.ToString());
             return true;
         }
 
         static bool ChannelCreated(string channelGuid)
         {
-            Console.WriteLine("Channel created: " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ChannelCreated channel created: " + channelGuid);
             return true;
         }
 
         static bool ChannelDestroyed(string channelGuid)
         {
-            Console.WriteLine("Channel destroyed: " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ChannelDestroyed channel destroyed: " + channelGuid);
             return true;
         }
 
         static bool ClientJoinedChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " joined channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ClientJoinedChannel client " + clientGuid + " joined channel " + channelGuid);
             return true;
         }
 
         static bool ClientJoinedServer(string clientGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " joined the server");
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ClientJoinedServer client " + clientGuid + " joined the server");
             return true;
         }
 
         static bool ClientLeftChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " left channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ClientLeftChannel client " + clientGuid + " left channel " + channelGuid);
             return true;
         }
 
         static bool ClientLeftServer(string clientGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " left the server");
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ClientLeftServer client " + clientGuid + " left the server");
             return true;
         }
 
         static bool ServerConnected()
         {
-            Console.WriteLine("Message queue server connected");
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ServerConnected message queue server connected");
             return true;
         }
 
         static bool ServerDisconnected()
         {
-            Console.WriteLine("Message queue server disconnected");
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway ServerDisconnected message queue server disconnected");
             return true;
         }
 
         static bool SubscriberJoinedChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " subscribed to channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway SubscriberJoinedChannel client " + clientGuid + " subscribed to channel " + channelGuid);
             return true;
         }
 
         static bool SubscriberLeftChannel(string clientGuid, string channelGuid)
         {
-            Console.WriteLine("Client " + clientGuid + " unsubscribed from channel " + channelGuid);
+            _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway SubscriberLeftChannel client " + clientGuid + " unsubscribed from channel " + channelGuid);
             return true;
         }
 
         static byte[] SyncMessageReceived(Message msg)
         {
-            Console.WriteLine("Sync message received: " + Environment.NewLine + msg.ToString());
+            // _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway SyncMessageReceived sync message received: " + Environment.NewLine + msg.ToString());
             return null;
         }
 
@@ -335,26 +354,27 @@ namespace WatsonFunction.ApiGateway
                     Encoding.UTF8.GetBytes(Common.SerializeJson(fcnRequest)),
                     out bigqResp))
                 {
-                    Console.WriteLine("Unable to retrieve response from worker");
+                    _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway RequestHandler unable to retrieve response from worker");
                     return resp;
                 }
 
                 if (bigqResp == null || bigqResp.Data == null || bigqResp.Data.Length < 1)
                 {
-                    Console.WriteLine("No response returned from worker");
+                    _Logging.Log(LoggingModule.Severity.Warn, "ApiGateway RequestHandler no response returned from worker");
                     return resp;
                 }
 
                 fcnResponse = Common.DeserializeJson<Response>(bigqResp.Data);
-                Console.WriteLine("Function response: " + Common.SerializeJson(fcnResponse));
-                Console.WriteLine("Finished executing " + fcnRequest.UserGUID + "/" + fcnRequest.FunctionName + " on " + bigqResp.SenderGUID + " [" + fcnResponse.RuntimeMs + "ms]");
+                _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway RequestHandler function response: " + Common.SerializeJson(fcnResponse));
+                _Logging.Log(LoggingModule.Severity.Debug, "ApiGateway RequestHandler finished executing " + fcnRequest.UserGUID + "/" + fcnRequest.FunctionName + " on " + bigqResp.SenderGUID + " [" + fcnResponse.RuntimeMs + "ms]");
 
                 resp = new HttpResponse(req, fcnResponse.HttpStatus, fcnResponse.Headers, fcnResponse.ContentType, fcnResponse.Data); 
                 return resp; 
             }
             catch (Exception e)
             {
-                Console.WriteLine(Common.SerializeJson(e));
+                _Logging.Log(LoggingModule.Severity.Alert, "ApiGateway RequestHandler exception while processing request:");
+                _Logging.LogException("ApiGateway", "RequestHandler", e);
                 resp = new HttpResponse(req, 500, null, "application/json", Encoding.UTF8.GetBytes(Common.SerializeJson(e)));
                 return resp;
             } 

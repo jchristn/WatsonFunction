@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using SyslogLogging;
+
 using WatsonFunction.FunctionBase;
 
 namespace WatsonFunction.ApiGateway.Classes
@@ -13,6 +15,7 @@ namespace WatsonFunction.ApiGateway.Classes
         public WebserverSettings Webserver = new WebserverSettings();
         public MessageQueueSettings MessageQueue = new MessageQueueSettings();
         public List<FunctionApplication> Applications = new List<FunctionApplication>();
+        public LoggingSettings Logging = new LoggingSettings();
 
         #endregion
 
@@ -76,7 +79,20 @@ namespace WatsonFunction.ApiGateway.Classes
             {
 
             }
-        } 
+        }
+
+        public class LoggingSettings
+        {
+            public string SyslogServerIp = "127.0.0.1";
+            public int SyslogServerPort = 514;
+            public LoggingModule.Severity MinimumSeverity = LoggingModule.Severity.Info;
+            public bool ConsoleLogging = true;
+
+            public LoggingSettings()
+            {
+
+            }
+        }
 
         #endregion 
     }
