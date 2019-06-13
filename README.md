@@ -110,9 +110,11 @@ The message bus for WatsonFunction relies on BigQ (https://github.com/bigqio/big
 
 ## Worker Nodes
 
-Worker nodes need to have access to the filesystem location where functions are stored.  As of this release, functions are invoked using the *same user account* as was used to start the worker node itself.  Thus it is recommended that the platform currently be used only for deployments where the function source code is *trusted*.
+Worker nodes need to have access to the filesystem location where functions are stored.  As of this release, functions are invoked using the *same user account* as was used to start the worker node itself.  Thus it is recommended that the platform currently be used only for deployments where the function source code is *trusted*.  Alternatively, run the worker nodes in containers.
 
 Worker nodes listen on the invocation channel, deserialize messages to the ```Request``` object, invoke the function, and return the ```Response``` object returned by the function through the message bus to the API gateway, which then marshals the response to the caller.
+
+Worker nodes must have access to the ```BaseDirectory``` (which must be explicit and not relative) to read the ```EntryFile```.
 
 ## Supported Runtimes
 
