@@ -30,7 +30,7 @@ Function applications must include ```WatsonFunction.FunctionBase``` and impleme
 
 Install the NuGet package ```WatsonFunction.FunctionBase``` to creation functions (https://www.nuget.org/packages/WatsonFunction.Base/).
 
-```
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Text;
